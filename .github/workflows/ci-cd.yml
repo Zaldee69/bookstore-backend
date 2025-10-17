@@ -44,11 +44,12 @@ jobs:
       - name: Run database migrations (test)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL_TEST }}
         run: |
-          if [ -n "$DATABASE_URL" ]; then
+          if [ -n "$DATABASE_URL" ] && [ -n "$DIRECT_URL" ]; then
             npx prisma migrate deploy
           else
-            echo "DATABASE_URL_TEST not configured, skipping migrations"
+            echo "DATABASE_URL_TEST or DIRECT_URL_TEST not configured, skipping migrations"
           fi
 
       - name: Run tests (if available)
@@ -143,6 +144,7 @@ jobs:
             NODE_ENV=production
             PORT=3000
             DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DIRECT_URL=${{ secrets.DIRECT_URL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_EXPIRES_IN=3600
             PAYMENT_CALLBACK_SECRET=${{ secrets.PAYMENT_CALLBACK_SECRET }}
