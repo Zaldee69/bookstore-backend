@@ -139,8 +139,9 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             cd /opt/book-backend
-            if [ ! -f .env ]; then
-              cat > .env << EOF
+            
+            echo "Creating/updating .env file..."
+            cat > .env << EOF
             NODE_ENV=production
             PORT=3000
             DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/book-backend:latest
@@ -154,10 +155,9 @@ jobs:
             RATE_LIMIT_SENSITIVE_WINDOW_MS=300000
             RATE_LIMIT_SENSITIVE_MAX=5
             EOF
-              echo ".env file created"
-            else
-              echo ".env file already exists, skipping..."
-            fi
+            
+            echo ".env file updated successfully"
+            echo "DOCKER_IMAGE is set to: ${{ secrets.DOCKER_USERNAME }}/book-backend:latest"
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
