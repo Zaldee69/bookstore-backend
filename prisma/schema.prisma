@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum OrderStatus {
+  CREATED
+  PAID
+  FAILED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  // Single session enforcement
+  currentJti   String?  @unique
+  tokenVersion Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  carts        Cart[]
+  orders       Order[]
+}
+
+model Book {
+  id         String      @id @default(uuid())
+  title      String
+  author     String
+  price      Int         // dalam sen/IDR minor unit
+  stock      Int         @default(0)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  qty       Int
+  unitPrice Int      // snapshot harga saat ditambahkan
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, bookId])
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  status    OrderStatus @default(CREATED)
+  total     Int         @default(0)
+  items     OrderItem[]
+  payment   Payment?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model OrderItem {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bookId  String
+  book    Book   @relation(fields: [bookId], references: [id])
+  qty     Int
+  price   Int    // harga per item saat checkout
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  orderId     String        @unique
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      PaymentStatus @default(PENDING)
+  providerRef String?       // simulasi/placeholder
+  amount      Int
+  idempotencyKey String?    @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ErrorLog {
+  id        String   @id @default(uuid())
+  level     String   // ERROR/WARN
+  message   String
+  stack     String?
+  meta      Json?
+  createdAt DateTime @default(now())
+}
