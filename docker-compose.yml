@@ -3,9 +3,7 @@ version: "3.8"
 services:
   # Backend API (using Supabase cloud database)
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-your-username/book-backend:latest}
     container_name: book-backend-api
     restart: unless-stopped
     ports:
@@ -14,6 +12,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-3600}
       PAYMENT_CALLBACK_SECRET: ${PAYMENT_CALLBACK_SECRET}

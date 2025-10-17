@@ -143,6 +143,7 @@ jobs:
               cat > .env << EOF
             NODE_ENV=production
             PORT=3000
+            DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/book-backend:latest
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             DIRECT_URL=${{ secrets.DIRECT_URL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -167,12 +168,43 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             cd /opt/book-backend
+            
+            echo "Pulling latest image..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/book-backend:latest
-            docker-compose down
+            
+            echo "Stopping old container..."
+            docker-compose down || true
+            
+            echo "Starting new container..."
             docker-compose up -d
+            
+            echo "Waiting for application to start..."
+            sleep 15
+            
+            echo "Checking container status..."
+            docker-compose ps
+            
+            echo "Checking application logs..."
+            docker-compose logs --tail=50 api
+            
+            echo "Testing health endpoint..."
+            MAX_RETRIES=10
+            RETRY_COUNT=0
+            until curl -f http://localhost:3000/health || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+              echo "Health check attempt $((RETRY_COUNT+1))/$MAX_RETRIES failed, retrying in 5s..."
+              sleep 5
+              RETRY_COUNT=$((RETRY_COUNT+1))
+            done
+            
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+              echo "Health check failed after $MAX_RETRIES attempts"
+              docker-compose logs api
+              exit 1
+            fi
+            
+            echo "Cleaning up old images..."
             docker image prune -f
-            sleep 10
-            curl -f http://localhost:3000/health || exit 1
+            
             echo "Deployment successful!"
 
       - name: Deployment notification
