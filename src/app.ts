@@ -19,15 +19,14 @@ export const createApp = () => {
   // Security middleware
   app.use(helmet());
 
-  // ✅ CORS Configuration (CRITICAL: Must be before routes)
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "http://localhost:5173", // Vite default
-    "http://localhost:5174", // Vite alternative
-    "https://api.zaldee.app", // Production API
-    "https://zaldee.app", // Production frontend
-    "https://www.zaldee.app", // Production frontend (www)
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://api.zaldee.app",
+    "https://zaldee.app",
+    "https://www.zaldee.app",
   ];
 
   app.use(
@@ -35,7 +34,7 @@ export const createApp = () => {
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        
+
         if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
