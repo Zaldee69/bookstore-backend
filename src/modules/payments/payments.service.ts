@@ -32,7 +32,7 @@ export class PaymentsService {
 
     // Return callback URL and payload
     return {
-      callbackUrl: `${env.apiUrl}/payments/callback`,
+      callbackUrl: `https://api.zaldee.app/payments/callback`,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
