@@ -20,14 +20,16 @@ export class PaymentsController {
   async simulatePayment(req: Request, res: Response, next: NextFunction) {
     try {
       const validated = simulateSchema.parse(req.body);
-      const result = await paymentsService.simulatePayment(
+      const result = await paymentsService.generateCallbackData(
         validated.orderId,
         validated.status
       );
 
       res.status(200).json({
-        message: "Payment simulated successfully",
-        data: result.payment,
+        message: "Payment callback data generated",
+        data: result,
+        instructions:
+          "Use the callbackUrl and payload to simulate payment callback. Send a POST request with the payload to update payment status.",
       });
     } catch (error) {
       next(error);

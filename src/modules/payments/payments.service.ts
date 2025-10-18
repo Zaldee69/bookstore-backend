@@ -5,11 +5,11 @@ import crypto from "crypto";
 
 export class PaymentsService {
   /**
-   * Simulate payment callback (for testing)
-   * Auto-generates signature and processes payment
+   * Generate payment callback data (for testing)
+   * Returns callback URL and payload with auto-generated signature
    */
-  async simulatePayment(orderId: string, status: "SUCCESS" | "FAILED") {
-    // Get payment to verify it exists and belongs to user
+  async generateCallbackData(orderId: string, status: "SUCCESS" | "FAILED") {
+    // Get payment to verify it exists
     const payment = await prisma.payment.findFirst({
       where: { orderId },
       include: { order: true },
@@ -22,13 +22,23 @@ export class PaymentsService {
     // Auto-generate signature
     const signature = this.generateSignature(orderId, status);
 
-    // Call the actual callback handler
-    return await this.handleCallback({
+    // Generate callback payload
+    const callbackPayload = {
       orderId,
       status,
       providerRef: `SIM-${Date.now()}`,
       signature,
-    });
+    };
+
+    // Return callback URL and payload
+    return {
+      callbackUrl: `${env.apiUrl}/payments/callback`,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      payload: callbackPayload,
+    };
   }
 
   /**

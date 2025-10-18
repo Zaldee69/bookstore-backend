@@ -343,7 +343,7 @@
       "name": "Payments",
       "item": [
         {
-          "name": "Simulate Payment - SUCCESS",
+          "name": "Generate Callback - SUCCESS",
           "request": {
             "method": "POST",
             "header": [
@@ -365,11 +365,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["payments", "simulate"]
             },
-            "description": "Simulate successful payment for testing. Auto-generates signature and updates payment status. Use orderId from checkout response."
+            "description": "Generate payment callback data with auto-generated signature. Returns callbackUrl and payload. Copy the payload and send it to the callback endpoint to process payment.\n\nWorkflow:\n1. Send this request\n2. Copy the 'payload' from response\n3. Use 'Payment Callback - SUCCESS' request with the copied payload"
           }
         },
         {
-          "name": "Simulate Payment - FAILED",
+          "name": "Generate Callback - FAILED",
           "request": {
             "method": "POST",
             "header": [
@@ -391,7 +391,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["payments", "simulate"]
             },
-            "description": "Simulate failed payment for testing. Auto-generates signature, updates payment status, and restores book stock. Use orderId from checkout response."
+            "description": "Generate payment callback data with auto-generated signature for failed payment. Returns callbackUrl and payload. Copy the payload and send it to the callback endpoint to process failed payment (will restore stock).\n\nWorkflow:\n1. Send this request\n2. Copy the 'payload' from response\n3. Use 'Payment Callback - FAILED' request with the copied payload"
           }
         },
         {

@@ -5,6 +5,7 @@ dotenv.config();
 export const env = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  apiUrl: process.env.API_URL || 'http://localhost:3000',
   
   jwt: {
     secret: process.env.JWT_SECRET || 'your-secret-key',

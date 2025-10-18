@@ -10,10 +10,18 @@ const paymentsController = new PaymentsController();
  * @swagger
  * /payments/simulate:
  *   post:
- *     summary: Simulate payment callback (Testing)
+ *     summary: Generate payment callback data (Testing)
  *     description: |
- *       Simulate payment status update for testing purposes. Auto-generates signature and processes payment callback. 
- *       **Note:** In production, use actual payment gateway callbacks instead.
+ *       Generate payment callback URL and payload with auto-generated signature for testing purposes.
+ *       Returns the callback URL and payload that you need to POST separately to actually process the payment.
+ *       
+ *       **Workflow:**
+ *       1. Call this endpoint to generate callback data
+ *       2. Copy the returned callbackUrl and payload
+ *       3. Make a separate POST request to the callbackUrl with the payload
+ *       4. Payment status will be updated
+ *       
+ *       **Note:** In production, payment gateway will call the callback endpoint directly.
  *     tags: [Payments]
  *     security:
  *       - bearerAuth: []
@@ -35,11 +43,11 @@ const paymentsController = new PaymentsController();
  *               status:
  *                 type: string
  *                 enum: [SUCCESS, FAILED]
- *                 description: Simulated payment status
+ *                 description: Desired payment status
  *                 example: SUCCESS
  *     responses:
  *       200:
- *         description: Payment simulated successfully
+ *         description: Callback data generated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -47,21 +55,36 @@ const paymentsController = new PaymentsController();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Payment simulated successfully
+ *                   example: Payment callback data generated
+ *                 instructions:
+ *                   type: string
+ *                   example: Use the callbackUrl and payload to simulate payment callback. Send a POST request with the payload to update payment status.
  *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     callbackUrl:
  *                       type: string
- *                     orderId:
+ *                       example: http://localhost:3000/payments/callback
+ *                     method:
  *                       type: string
- *                     status:
- *                       type: string
- *                       enum: [SUCCESS, FAILED]
- *                     amount:
- *                       type: number
- *                     providerRef:
- *                       type: string
+ *                       example: POST
+ *                     headers:
+ *                       type: object
+ *                       properties:
+ *                         Content-Type:
+ *                           type: string
+ *                           example: application/json
+ *                     payload:
+ *                       type: object
+ *                       properties:
+ *                         orderId:
+ *                           type: string
+ *                         status:
+ *                           type: string
+ *                         providerRef:
+ *                           type: string
+ *                         signature:
+ *                           type: string
  *       400:
  *         description: Invalid request body
  *       401:
