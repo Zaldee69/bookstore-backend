@@ -12,6 +12,20 @@ const callbackSchema = z.object({
 });
 
 export class PaymentsController {
+  async getPaymentHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.id;
+      const payments = await paymentsService.getPaymentHistory(userId);
+      
+      res.status(200).json({
+        message: 'Payment history retrieved successfully',
+        data: payments,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async handleCallback(req: Request, res: Response, next: NextFunction) {
     try {
       const validated = callbackSchema.parse(req.body);

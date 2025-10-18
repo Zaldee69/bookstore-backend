@@ -343,6 +343,24 @@
       "name": "Payments",
       "item": [
         {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "history"]
+            },
+            "description": "Get authenticated user's payment history with order details and items. Returns all payments sorted by creation date (newest first)."
+          }
+        },
+        {
           "name": "Payment Callback - SUCCESS",
           "request": {
             "method": "POST",

@@ -4,6 +4,63 @@ import { env } from '../../config/env.js';
 import crypto from 'crypto';
 
 export class PaymentsService {
+  /**
+   * Get payment history for authenticated user
+   */
+  async getPaymentHistory(userId: string) {
+    const payments = await prisma.payment.findMany({
+      where: {
+        order: {
+          userId,
+        },
+      },
+      include: {
+        order: {
+          include: {
+            items: {
+              include: {
+                book: {
+                  select: {
+                    id: true,
+                    title: true,
+                    author: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return payments.map((payment) => ({
+      id: payment.id,
+      orderId: payment.orderId,
+      amount: payment.amount,
+      status: payment.status,
+      providerRef: payment.providerRef,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt,
+      order: {
+        id: payment.order.id,
+        status: payment.order.status,
+        total: payment.order.total,
+        createdAt: payment.order.createdAt,
+        items: payment.order.items.map((item) => ({
+          bookId: item.bookId,
+          title: item.book.title,
+          author: item.book.author,
+          qty: item.qty,
+          price: item.price,
+          subtotal: item.qty * item.price,
+        })),
+      },
+    }));
+  }
+
   async handleCallback(data: {
     orderId: string;
     status: 'PENDING' | 'SUCCESS' | 'FAILED';
