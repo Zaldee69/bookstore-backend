@@ -22,10 +22,10 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
-  "keywords": [],
+  "keywords": ["ecommerce", "books", "api", "jwt", "prisma"],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "REST API for book e-commerce platform with JWT auth and RBAC",
   "dependencies": {
     "@prisma/client": "^6.17.0",
     "bcrypt": "^6.0.0",

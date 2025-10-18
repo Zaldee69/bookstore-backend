@@ -14,13 +14,13 @@ const paymentsController = new PaymentsController();
  *     description: |
  *       Generate payment callback URL and payload with auto-generated signature for testing purposes.
  *       Returns the callback URL and payload that you need to POST separately to actually process the payment.
- *       
+ *
  *       **Workflow:**
  *       1. Call this endpoint to generate callback data
  *       2. Copy the returned callbackUrl and payload
  *       3. Make a separate POST request to the callbackUrl with the payload
  *       4. Payment status will be updated
- *       
+ *
  *       **Note:** In production, payment gateway will call the callback endpoint directly.
  *     tags: [Payments]
  *     security:
