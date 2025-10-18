@@ -1,16 +1,26 @@
 # Book E-Commerce Backend API
 
-Backend API untuk e-commerce buku dengan fitur authentication, role-based access control (RBAC), manajemen transaksi aman, rate limiting, dan error logging.
+Backend API untuk e-commerce buku dengan fitur authentication, role-based access control (RBAC), manajemen transaksi aman, rate limiting, error logging, dan full CI/CD deployment.
+
+## 🌐 Live API
+
+**Production:** `https://api.zaldee.app`
+
+**Documentation:** `https://api.zaldee.app/docs`
 
 ## Tech Stack
 
 - **Runtime**: Node.js + Express.js
-- **Database**: PostgreSQL (Prisma Postgres)
+- **Database**: PostgreSQL (Supabase)
 - **ORM**: Prisma
 - **Authentication**: JWT (1 jam expiry) + Single Active Session
 - **Validation**: Zod
 - **Security**: Helmet, CORS, Rate Limiting
 - **Documentation**: Swagger UI
+- **Container**: Docker + Docker Compose
+- **CI/CD**: GitHub Actions
+- **Deployment**: VPS (Auto-deploy on push to main)
+- **Reports**: Excel generation (ExcelJS)
 
 ## Features
 
@@ -28,6 +38,8 @@ Backend API untuk e-commerce buku dengan fitur authentication, role-based access
 - ✅ Kelola shopping cart (add, update, remove)
 - ✅ Checkout dengan validasi stok real-time
 - ✅ View order history
+- ✅ View payment history dengan detail lengkap
+- ✅ Simulate payment untuk testing
 
 ### Admin Features
 
@@ -35,6 +47,7 @@ Backend API untuk e-commerce buku dengan fitur authentication, role-based access
 - ✅ Manage stok buku (increment/decrement)
 - ✅ View semua transaksi
 - ✅ Sales report (total terjual, revenue, sisa stok)
+- ✅ Download sales report sebagai Excel (.xlsx)
 
 ### Security & Performance
 
@@ -60,15 +73,30 @@ npm install
 
 ### 2. Environment Configuration
 
-Edit `.env` file:
+Create `.env` file:
 
 ```env
-DATABASE_URL="your-postgres-connection-string"
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_EXPIRES_IN="3600"
-PAYMENT_CALLBACK_SECRET="your-payment-callback-secret"
+# Database (Supabase)
+DATABASE_URL="postgresql://user:pass@host:6543/db?pgbouncer=true"  # Connection Pooling
+DIRECT_URL="postgresql://user:pass@host:5432/db"  # For Prisma migrations
+
+# API Configuration
+API_URL="http://localhost:3000"  # For production: https://api.zaldee.app
 PORT="3000"
 NODE_ENV="development"
+
+# Authentication
+JWT_SECRET="your-super-secret-jwt-key"
+JWT_EXPIRES_IN="3600"
+
+# Payment
+PAYMENT_CALLBACK_SECRET="your-payment-callback-secret"
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS="900000"  # 15 minutes
+RATE_LIMIT_MAX="100"
+RATE_LIMIT_SENSITIVE_WINDOW_MS="300000"  # 5 minutes
+RATE_LIMIT_SENSITIVE_MAX="5"
 ```
 
 ### 3. Database Setup
@@ -145,9 +173,14 @@ Setelah seeding, gunakan kredensial berikut:
 - `GET /orders` - View order history
 - `GET /orders/:id` - View order detail
 
-### Payments
+### Payments (Customer)
 
-- `POST /payments/callback` - Payment callback webhook
+- `POST /payments/simulate` - Generate payment callback data (testing)
+- `GET /payments/history` - View payment history dengan detail order
+
+### Payments (Webhook)
+
+- `POST /payments/callback` - Payment gateway callback webhook
 
 ### Admin - Books
 
@@ -160,7 +193,8 @@ Setelah seeding, gunakan kredensial berikut:
 ### Admin - Reports
 
 - `GET /admin/transactions` - List semua transaksi
-- `GET /admin/reports/sales` - Sales report
+- `GET /admin/reports/sales` - Sales report (JSON)
+- `GET /admin/reports/sales/excel` - Download sales report (Excel)
 
 ## Security Features
 
@@ -196,33 +230,50 @@ curl -X POST http://localhost:3000/orders/checkout \
 
 ## Testing Payment Callback
 
-Generate signature untuk testing:
+### Method 1: Using Simulate Endpoint (Recommended)
 
-```typescript
-import crypto from "crypto";
-
-const orderId = "your-order-id";
-const status = "SUCCESS"; // atau 'FAILED'
-const secret = process.env.PAYMENT_CALLBACK_SECRET;
-
-const signature = crypto
-  .createHmac("sha256", secret)
-  .update(`${orderId}:${status}`)
-  .digest("hex");
+**Step 1: Generate callback data**
+```bash
+curl -X POST http://localhost:3000/payments/simulate \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "orderId": "your-order-id",
+    "status": "SUCCESS"
+  }'
 ```
 
-Kemudian kirim callback:
+Response akan berisi callback URL dan payload dengan signature yang sudah auto-generated.
 
+**Step 2: Send callback**
+Copy payload dari response Step 1, lalu:
 ```bash
 curl -X POST http://localhost:3000/payments/callback \
   -H "Content-Type: application/json" \
   -d '{
     "orderId": "your-order-id",
     "status": "SUCCESS",
-    "providerRef": "PAY123456",
-    "signature": "generated-signature"
+    "providerRef": "SIM-1234567890",
+    "signature": "auto-generated-from-step-1"
   }'
 ```
+
+### Method 2: Manual dengan Script
+
+Generate signature secara manual:
+
+```bash
+npx tsx scripts/generateSignature.ts ORDER_ID SUCCESS
+```
+
+Kemudian hit callback endpoint dengan signature yang di-generate.
+
+### Method 3: Postman Collection
+
+Import `postman_collection.json` dan gunakan:
+1. **Generate Callback - SUCCESS** request
+2. Copy payload dari response
+3. **Payment Callback - SUCCESS** request dengan payload yang sudah dicopy
 
 ## Database Schema
 
@@ -254,23 +305,104 @@ curl -X POST http://localhost:3000/payments/callback \
 
 - Automatic logging untuk errors & warnings
 
-## Deployment
+## 🚀 Deployment
 
-### Environment Variables
+### Docker Deployment
 
-Pastikan set semua ENV di production:
-
-- `DATABASE_URL` - Production PostgreSQL URL
-- `JWT_SECRET` - Strong secret key
-- `PAYMENT_CALLBACK_SECRET` - Shared secret dengan payment provider
-- `NODE_ENV=production`
-
-### Build & Run
+**Build and run with Docker Compose:**
 
 ```bash
-npm run build
-npm start
+# Build image
+docker-compose build
+
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
+
+**Or use Makefile shortcuts:**
+
+```bash
+make build        # Build Docker image
+make up           # Start container
+make logs         # View logs
+make restart      # Restart container
+make migrate      # Run migrations
+make db-studio    # Open Prisma Studio
+```
+
+### CI/CD Pipeline
+
+**Automatic deployment on push to `main`:**
+
+1. ✅ Lint & Test (TypeScript compilation)
+2. ✅ Build Docker image
+3. ✅ Push to Docker Hub
+4. ✅ Auto-deploy to VPS
+5. ✅ Run migrations
+6. ✅ Health check
+7. ✅ Success! 🎉
+
+**GitHub Actions Workflow:**
+- Triggered on push to `main`
+- Runs tests and builds
+- Deploys to production automatically
+- See `.github/workflows/ci-cd.yml`
+
+### Production Environment
+
+**Required GitHub Secrets:**
+
+**Docker Hub (2 secrets):**
+- `DOCKER_USERNAME` - Docker Hub username
+- `DOCKER_PASSWORD` - Docker Hub access token
+
+**Database (2 secrets):**
+- `DATABASE_URL` - Supabase connection pooling URL (port 6543)
+- `DIRECT_URL` - Supabase direct connection URL (port 5432)
+
+**Security (2 secrets):**
+- `JWT_SECRET` - Strong JWT secret key
+- `PAYMENT_CALLBACK_SECRET` - Payment callback secret
+
+**VPS (4 secrets):**
+- `VPS_HOST` - VPS IP address or domain
+- `VPS_USER` - SSH username (e.g., root)
+- `VPS_PORT` - SSH port (default: 22)
+- `VPS_SSH_KEY` - SSH private key for deployment
+
+**Generate secrets:**
+```bash
+# JWT and Payment secrets
+openssl rand -hex 32
+
+# SSH key for VPS
+ssh-keygen -t ed25519 -f ~/.ssh/github-actions-vps
+```
+
+### Domain Setup
+
+**Production API:** `https://api.zaldee.app`
+
+**DNS Configuration:**
+1. Add A record: `api` → VPS IP
+2. Wait for DNS propagation
+
+**Nginx + SSL:**
+```bash
+# On VPS
+sudo apt install nginx certbot python3-certbot-nginx
+
+# Setup SSL
+sudo certbot --nginx -d api.zaldee.app
+```
+
+See full guide in repository documentation.
 
 ## License
 
