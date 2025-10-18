@@ -8,6 +8,78 @@ const paymentsController = new PaymentsController();
 
 /**
  * @swagger
+ * /payments/simulate:
+ *   post:
+ *     summary: Simulate payment callback (Testing)
+ *     description: |
+ *       Simulate payment status update for testing purposes. Auto-generates signature and processes payment callback. 
+ *       **Note:** In production, use actual payment gateway callbacks instead.
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderId
+ *               - status
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Order ID from checkout
+ *                 example: 550e8400-e29b-41d4-a716-446655440000
+ *               status:
+ *                 type: string
+ *                 enum: [SUCCESS, FAILED]
+ *                 description: Simulated payment status
+ *                 example: SUCCESS
+ *     responses:
+ *       200:
+ *         description: Payment simulated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Payment simulated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     orderId:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       enum: [SUCCESS, FAILED]
+ *                     amount:
+ *                       type: number
+ *                     providerRef:
+ *                       type: string
+ *       400:
+ *         description: Invalid request body
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Payment not found
+ *       429:
+ *         $ref: '#/components/responses/RateLimitError'
+ */
+router.post(
+  "/simulate",
+  requireAuth,
+  sensitiveRateLimit,
+  paymentsController.simulatePayment
+);
+
+/**
+ * @swagger
  * /payments/history:
  *   get:
  *     summary: Get payment history

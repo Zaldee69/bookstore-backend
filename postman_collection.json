@@ -343,6 +343,58 @@
       "name": "Payments",
       "item": [
         {
+          "name": "Simulate Payment - SUCCESS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"status\": \"SUCCESS\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/simulate",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "simulate"]
+            },
+            "description": "Simulate successful payment for testing. Auto-generates signature and updates payment status. Use orderId from checkout response."
+          }
+        },
+        {
+          "name": "Simulate Payment - FAILED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"status\": \"FAILED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/simulate",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "simulate"]
+            },
+            "description": "Simulate failed payment for testing. Auto-generates signature, updates payment status, and restores book stock. Use orderId from checkout response."
+          }
+        },
+        {
           "name": "Get Payment History",
           "request": {
             "method": "GET",
